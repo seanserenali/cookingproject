@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChefMagic | Creative Recipe Generator</title>
+    <meta name="description" content="Turn your remaining ingredients into gourmet recipes instantly with ChefMagic.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="bg-blob"></div>
+    <div class="bg-blob-2"></div>
+
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">ChefMagic</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Generator</a>
+                <a href="prepicked.html" class="nav-link">Pre-Picked</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 2rem;">
+        <header>
+            <h1>ChefMagic</h1>
+            <p class="subtitle">Enter the ingredients you have, and let magic happen.</p>
+        </header>
+
+        <main>
+            <section class="glass-card">
+                <div class="input-group">
+                    <div class="input-field-wrapper">
+                        <input type="text" id="ingredient-input" placeholder="e.g. Tomato, Basil, Garlic..."
+                            aria-label="Add ingredient" list="ingredient-suggestions">
+                        <datalist id="ingredient-suggestions">
+                            <!-- Options will be populated via JS -->
+                        </datalist>
+                        <button class="primary-btn" id="add-btn">
+                            <span>Add</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="ingredients-list" id="ingredients-list">
+                        <!-- Chips will appear here -->
+                    </div>
+
+                    <div class="suggestions-container" id="suggestions">
+                        <span class="recipe-sub"
+                            style="margin-bottom: 1.5rem; display: block; font-size: 0.9rem; text-align: center; letter-spacing: 0.1em; text-transform: uppercase;">The
+                            Ingredient Sheet</span>
+
+                        <div class="ingredient-grid">
+                            <div class="ingredient-category">
+                                <h4>Staples</h4>
+                                <div class="category-chips">
+                                    <button class="suggestion-chip">Garlic</button>
+                                    <button class="suggestion-chip">Onion</button>
+                                    <button class="suggestion-chip">Olive Oil</button>
+                                    <button class="suggestion-chip">Butter</button>
+                                    <button class="suggestion-chip">Salt</button>
+                                    <button class="suggestion-chip">Black Pepper</button>
+                                    <button class="suggestion-chip">Lemon</button>
+                                    <button class="suggestion-chip">Egg</button>
+                                </div>
+                            </div>
+
+                            <div class="ingredient-category">
+                                <h4>Proteins</h4>
+                                <div class="category-chips">
+                                    <button class="suggestion-chip">Chicken</button>
+                                    <button class="suggestion-chip">Beef</button>
+                                    <button class="suggestion-chip">Shrimp</button>
+                                    <button class="suggestion-chip">Salmon</button>
+                                    <button class="suggestion-chip">Bacon</button>
+                                    <button class="suggestion-chip">Tofu</button>
+                                    <button class="suggestion-chip">Pork</button>
+                                </div>
+                            </div>
+
+                            <div class="ingredient-category">
+                                <h4>vibe Veggies</h4>
+                                <div class="category-chips">
+                                    <button class="suggestion-chip">Tomato</button>
+                                    <button class="suggestion-chip">Mushroom</button>
+                                    <button class="suggestion-chip">Spinach</button>
+                                    <button class="suggestion-chip">Broccoli</button>
+                                    <button class="suggestion-chip">Bell Pepper</button>
+                                    <button class="suggestion-chip">Zucchini</button>
+                                    <button class="suggestion-chip">Carrot</button>
+                                    <button class="suggestion-chip">Potato</button>
+                                </div>
+                            </div>
+
+                            <div class="ingredient-category">
+                                <h4>Dairy & Grains</h4>
+                                <div class="category-chips">
+                                    <button class="suggestion-chip">Cheese</button>
+                                    <button class="suggestion-chip">Milk</button>
+                                    <button class="suggestion-chip">Cream</button>
+                                    <button class="suggestion-chip">Pasta</button>
+                                    <button class="suggestion-chip">Rice</button>
+                                    <button class="suggestion-chip">Quinoa</button>
+                                    <button class="suggestion-chip">Flour</button>
+                                </div>
+                            </div>
+
+                            <div class="ingredient-category">
+                                <h4>Flavors</h4>
+                                <div class="category-chips">
+                                    <button class="suggestion-chip">Basil</button>
+                                    <button class="suggestion-chip">Cilantro</button>
+                                    <button class="suggestion-chip">Ginger</button>
+                                    <button class="suggestion-chip">Honey</button>
+                                    <button class="suggestion-chip">Soy Sauce</button>
+                                    <button class="suggestion-chip">Chili</button>
+                                    <button class="suggestion-chip">Sriracha</button>
+                                    <button class="suggestion-chip">Pesto</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; margin-top: 1rem;">
+                        <button class="primary-btn" id="generate-btn"
+                            style="padding: 1.25rem 3rem; font-size: 1.1rem; gap: 0.75rem;">
+                            <span>Generate Recipe</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 0 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 0-1.275-1.275L12 3Z">
+                                </path>
+                                <path d="M5 3v4"></path>
+                                <path d="M19 17v4"></path>
+                                <path d="M3 5h4"></path>
+                                <path d="M17 19h4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="recipe-section" id="recipe-section">
+                <!-- Recipe will be injected here -->
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
