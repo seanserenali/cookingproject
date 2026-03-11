@@ -32,7 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
 
-    let ingredients = [];
+    let categorizedIngredients = {
+        proteins: [],
+        carbs: [],
+        veggies: [],
+        flavors: []
+    };
+
+    const ingredientSubtypes = {
+        'Chicken': ['Chicken Thighs', 'Chicken Breast', 'Ground Chicken', 'Whole Chicken'],
+        'Beef': ['Ground Beef', 'Flank Steak', 'Beef Chuck', 'Ribeye'],
+        'Pork': ['Pork Chops', 'Pork Tenderloin', 'Ground Pork', 'Bacon'],
+        'Pasta': ['Spaghetti', 'Penne', 'Fusilli', 'Macaroni', 'Linguine'],
+        'Cheese': ['Cheddar', 'Mozzarella', 'Parmesan', 'Feta', 'Gruyere'],
+        'Rice': ['White Rice', 'Brown Rice', 'Basmati', 'Jasmine', 'Arborio'],
+        'Tomato': ['Cherry Tomatoes', 'Roma Tomatoes', 'Crushed Tomatoes', 'Sun-dried Tomatoes'],
+        'Onion': ['Yellow Onion', 'Red Onion', 'White Onion', 'Shallots']
+    };
     let currentRecipes = null;
 
     const ingredientData = {
@@ -43,10 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
         "Pasta": { unit: "oz", states: ["dry", "cooked al dente"] },
         "Chicken": { unit: "lbs", states: ["boneless, skinless, cubed", "breast halves", "thighs"] },
         "Beef": { unit: "lbs", states: ["ground", "thinly sliced against the grain", "stew meat"] },
+        "Pork": { unit: "lbs", states: ["tenderloin, sliced", "chops", "ground"] },
         "Shrimp": { unit: "lbs", states: ["peeled and deveined", "tail-on", "frozen, thawed"] },
         "Olive Oil": { unit: "tbsp", states: ["extra virgin", "for drizzling"] },
         "Butter": { unit: "tbsp", states: ["unsalted, softened", "cold, cubed", "melted"] },
         "Lemon": { unit: "whole", states: ["zested and juiced", "sliced into wedges"] },
+        "Salmon": { unit: "lbs", states: ["fillets, skin on", "center cut"] },
+        "Cilantro": { unit: "cup loosely packed", states: ["fresh, roughly chopped", "stems removed"] },
         "Honey": { unit: "tbsp", states: ["raw", "warmed"] },
         "Milk": { unit: "cups", states: ["whole", "at room temperature"] },
         "Flour": { unit: "cups", states: ["all-purpose, sifted", "measured correctly"] },
@@ -57,11 +76,30 @@ document.addEventListener('DOMContentLoaded', () => {
         "Rice": { unit: "cups", states: ["long-grain", "rinsed until clear"] },
         "Salt": { unit: "tsp", states: ["kosher", "fine sea salt"] },
         "Black Pepper": { unit: "tsp", states: ["freshly ground", "cracked"] },
-        "Mushroom": { unit: "cups sliced", states: ["cremini", "button, cleaned"] },
+        "Mushroom": { unit: "cups", states: ["cremini, sliced", "button, cleaned and quartered"] },
         "Spinach": { unit: "cups", states: ["fresh baby", "frozen, squeezed dry"] },
         "Soy Sauce": { unit: "tbsp", states: ["low-sodium", "dark"] },
-        "Ginger": { unit: "tsp grated", states: ["freshly peeled", "minced"] },
-        "Chili": { unit: "tsp flakes", states: ["red pepper", "dried"] }
+        "Ginger": { unit: "tsp", states: ["freshly grated", "minced"] },
+        "Chili": { unit: "tsp", states: ["red pepper flakes", "powder"] },
+        "Tofu": { unit: "oz", states: ["extra firm, pressed and cubed", "silken"] },
+        "Lentils": { unit: "cups", states: ["dry, sorted and rinsed", "cooked"] },
+        "Chickpeas": { unit: "15-oz can", states: ["rinsed and drained"] },
+        "Quinoa": { unit: "cups", states: ["dry, rinsed well", "cooked"] },
+        "Avocado": { unit: "whole", states: ["pitted and sliced", "mashed"] },
+        "Bell Pepper": { unit: "whole", states: ["seeded and diced", "sliced into strips"] },
+        "Broccoli": { unit: "cups", states: ["florets", "steamed"] },
+        "Carrot": { unit: "whole", states: ["peeled and diced", "shredded"] },
+        "Zucchini": { unit: "whole", states: ["sliced into half-moons", "spiralized"] },
+        "Asparagus": { unit: "bunch", states: ["ends trimmed", "cut into 2-inch pieces"] },
+        "Green Beans": { unit: "lbs", states: ["trimmed", "halved"] },
+        "Heavy Cream": { unit: "cups", states: ["cold", "at room temperature"] },
+        "Parmesan": { unit: "cups", states: ["freshly grated", "shredded"] },
+        "Feta": { unit: "oz", states: ["crumbled", "in brine"] },
+        "Balsamic Vinegar": { unit: "tbsp", states: ["aged", "glaze"] },
+        "Rice Vinegar": { unit: "tbsp", states: ["unseasoned"] },
+        "Sesame Oil": { unit: "tsp", states: ["toasted"] },
+        "Sriracha": { unit: "tsp", states: ["or to taste"] },
+        "Mustard": { unit: "tbsp", states: ["Dijon", "whole grain"] }
     };
 
     // Populate Datalist
@@ -77,69 +115,178 @@ document.addEventListener('DOMContentLoaded', () => {
     populateDatalist();
 
     const generateDetailProportion = (ing) => {
-        const data = ingredientData[ing] || { unit: "cups", states: ["prepared as desired"] };
+        // Simple heuristic for generic ingredients not in our list
+        const textLower = ing.toLowerCase();
+        let fallbackUnit = "cups";
+        if (textLower.includes("chicken") || textLower.includes("beef") || textLower.includes("pork") || textLower.includes("meat") || textLower.includes("fish")) {
+            fallbackUnit = "lbs";
+        } else if (textLower.includes("oil") || textLower.includes("sauce") || textLower.includes("vinegar") || textLower.includes("syrup")) {
+            fallbackUnit = "tbsp";
+        } else if (textLower.includes("salt") || textLower.includes("pepper") || textLower.includes("spice") || textLower.includes("powder")) {
+            fallbackUnit = "tsp";
+        } else if (textLower.includes("onion") || textLower.includes("tomato") || textLower.includes("lemon") || textLower.includes("lime") || textLower.includes("egg")) {
+            fallbackUnit = "whole";
+        }
+
+        const data = ingredientData[ing] || { unit: fallbackUnit, states: ["prepared as desired"] };
         const state = data.states[Math.floor(Math.random() * data.states.length)];
         let amount;
-        if (data.unit === "whole" || data.unit === "cloves" || data.unit === "large") {
+        let amountStr;
+
+        if (data.unit === "whole" || data.unit === "cloves" || data.unit === "large" || data.unit === "leaves") {
             amount = Math.floor(Math.random() * 3) + 1;
+            amountStr = amount.toString();
         } else if (data.unit === "tbsp" || data.unit === "tsp") {
-            amount = Math.floor(Math.random() * 2) + 1;
+            amount = Math.floor(Math.random() * 3) + 1;
+            amountStr = amount.toString();
+        } else if (data.unit === "oz") {
+            const commonSizes = [8, 12, 16];
+            amountStr = commonSizes[Math.floor(Math.random() * commonSizes.length)].toString();
         } else {
-            amount = (Math.random() * 1.5 + 0.5).toFixed(1);
+            // For lbs and cups, use fractions for better recipe feel
+            const fractions = ["1", "1 1/2", "2", "2 1/2", "1/2", "3/4", "1/4"];
+            amountStr = fractions[Math.floor(Math.random() * fractions.length)];
         }
-        return `${amount} ${data.unit} ${ing}, ${state}`;
+
+        // Clean up formatting
+        const unitString = data.unit === "whole" ? "" : data.unit;
+        return `${amountStr} ${unitString} ${ing}, ${state}`.replace(/\s+/g, ' ').trim();
     };
 
-    const addIngredient = () => {
-        const text = ingredientInput.value.trim();
-        if (text && !ingredients.includes(text)) {
-            ingredients.push(text);
-            renderChips();
-            ingredientInput.value = '';
-            ingredientInput.focus();
+    const commitIngredient = (text, category) => {
+        if (text && !categorizedIngredients[category].includes(text)) {
+            categorizedIngredients[category].push(text);
+            renderChips(category);
         }
     };
 
-    const removeIngredient = (index) => {
-        ingredients.splice(index, 1);
-        renderChips();
+    // Subtype Modal Logic
+    const subtypeModal = document.getElementById('subtype-modal');
+    const subtypeTitle = document.getElementById('subtype-title');
+    const subtypeOptions = document.getElementById('subtype-options');
+    const cancelSubtypeBtn = document.getElementById('cancel-subtype');
+
+    let pendingAddition = null;
+
+    const openSubtypeModal = (broadTerm, subtypes, category) => {
+        pendingAddition = { broadTerm, category };
+        subtypeTitle.textContent = `Which type of ${broadTerm}?`;
+        subtypeOptions.innerHTML = '';
+
+        subtypes.forEach(type => {
+            const btn = document.createElement('button');
+            btn.className = 'secondary-btn';
+            btn.textContent = type;
+            btn.onclick = () => {
+                commitIngredient(type, category);
+                closeSubtypeModal();
+            };
+            subtypeOptions.appendChild(btn);
+        });
+
+        // Option to just use the broad term anyway
+        const broadBtn = document.createElement('button');
+        broadBtn.className = 'text-btn';
+        broadBtn.textContent = `Just general ${broadTerm}`;
+        broadBtn.onclick = () => {
+            commitIngredient(broadTerm, pendingAddition.category);
+            closeSubtypeModal();
+        };
+        subtypeOptions.appendChild(broadBtn);
+
+        subtypeModal.classList.remove('hidden');
     };
 
-    const renderChips = () => {
-        ingredientsList.innerHTML = '';
-        ingredients.forEach((ing, index) => {
+    const closeSubtypeModal = () => {
+        subtypeModal.classList.add('hidden');
+        pendingAddition = null;
+    };
+
+    cancelSubtypeBtn.addEventListener('click', closeSubtypeModal);
+
+    const handleAddRequest = (text, category) => {
+        if (!text) return;
+        text = text.trim();
+        const titleCase = text.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+        // Check for subtypes
+        for (const [broad, specificTypes] of Object.entries(ingredientSubtypes)) {
+            if (titleCase === broad || text.toLowerCase() === broad.toLowerCase()) {
+                openSubtypeModal(broad, specificTypes, category);
+                return;
+            }
+        }
+
+        // No subtypes, commit directly
+        commitIngredient(text, category);
+    };
+
+    // Setup the 4 Input Groups
+    document.querySelectorAll('.input-group.category-group').forEach(group => {
+        const input = group.querySelector('input');
+        const btn = group.querySelector('.add-btn');
+        const category = input.getAttribute('data-cat');
+
+        const triggerAdd = () => {
+            handleAddRequest(input.value, category);
+            input.value = '';
+            input.focus();
+        };
+
+        btn.addEventListener('click', triggerAdd);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') triggerAdd();
+        });
+    });
+
+    const removeIngredient = (category, index) => {
+        categorizedIngredients[category].splice(index, 1);
+        renderChips(category);
+    };
+
+    const renderChips = (category) => {
+        const listEl = document.getElementById(`list-${category}`);
+        listEl.innerHTML = '';
+        categorizedIngredients[category].forEach((ing, index) => {
             const chip = document.createElement('div');
             chip.className = 'chip';
             chip.innerHTML = `
                 <span>${ing}</span>
-                <span class="remove" onclick="removeIngredient(${index})">&times;</span>
+                <span class="remove" onclick="removeIngredient('${category}', ${index})">&times;</span>
             `;
-            ingredientsList.appendChild(chip);
+            listEl.appendChild(chip);
         });
     };
 
     // Global expose for onclick
     window.removeIngredient = removeIngredient;
 
-    ingredientInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addIngredient();
-    });
-
-    addBtn.addEventListener('click', addIngredient);
-
     // Suggestion chips logic
     document.querySelectorAll('.suggestion-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             const text = chip.textContent;
-            if (!ingredients.includes(text)) {
-                ingredients.push(text);
-                renderChips();
-            }
+
+            // Auto-determine category based on its parent section
+            let category = 'flavors'; // default
+            const parentSection = chip.closest('.ingredient-category').querySelector('h4').textContent.toLowerCase();
+            if (parentSection.includes('protein')) category = 'proteins';
+            else if (parentSection.includes('dairy') || parentSection.includes('grain') || parentSection.includes('staples')) category = 'carbs'; // Staples going to carbs for now
+            else if (parentSection.includes('veggie')) category = 'veggies';
+
+            handleAddRequest(text, category);
         });
     });
 
     generateBtn.addEventListener('click', async () => {
-        if (ingredients.length === 0) {
+        // Flatten ingredients for existing generation logic
+        const allIngredients = [
+            ...categorizedIngredients.proteins,
+            ...categorizedIngredients.carbs,
+            ...categorizedIngredients.veggies,
+            ...categorizedIngredients.flavors
+        ];
+
+        if (allIngredients.length === 0) {
             alert("Please add some ingredients first!");
             return;
         }
@@ -167,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Simulate "AI" generation delay
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        currentRecipes = generateMultiLevelRecipes(ingredients);
+        currentRecipes = generateMultiLevelRecipes(allIngredients);
         displayRecipe('beginner');
 
         generateBtn.disabled = false;
@@ -177,8 +324,111 @@ document.addEventListener('DOMContentLoaded', () => {
         recipeSection.scrollIntoView({ behavior: 'smooth' });
     });
 
+    const detectDishType = (ings) => {
+        const ingredients = ings.map(i => i.toLowerCase());
+        if (ingredients.includes('pasta')) return 'Pasta';
+        if (ingredients.includes('rice') || ingredients.some(i => ['soy sauce', 'ginger', 'sesame oil'].includes(i))) return 'Stir-fry';
+        if (ingredients.some(i => ['chicken', 'beef', 'pork', 'shrimp', 'salmon'].includes(i))) return 'Protein Main';
+        if (ingredients.includes('lettuce') || ingredients.includes('spinach') || ingredients.includes('arugula')) return 'Salad';
+        if (ingredients.includes('tomato') || ingredients.includes('onion') || ingredients.includes('garlic')) return 'Classic';
+        return 'Specialty';
+    };
+
+    const getStepsByDishType = (ings, dishType, level) => {
+        const lowerIngs = ings.map(i => i.toLowerCase());
+        const primary = lowerIngs[0];
+        const secondary = lowerIngs.length > 1 ? lowerIngs.slice(1).join(' and ') : 'some basic aromatics';
+
+        // Helper to extract specific ingredient types
+        const findIng = (keywords) => lowerIngs.find(i => keywords.some(k => i.includes(k)));
+        const filterOut = (ingToExclude) => lowerIngs.filter(i => i !== ingToExclude);
+
+        const templates = {
+            'Pasta': (() => {
+                const pasta = findIng(['pasta', 'noodle', 'macaroni']) || 'pasta';
+                const addIns = filterOut(pasta).length > 0 ? filterOut(pasta).join(' and ') : 'garlic and oil';
+                return {
+                    beginner: [
+                        `Boil a large pot of salted water and cook the ${pasta} until tender.`,
+                        `In a separate pan, heat oil and sauté the ${addIns} for 5 minutes.`,
+                        `Drain the ${pasta}, reserving a little water, then toss everything together to combine.`
+                    ],
+                    intermediate: [
+                        `Bring a large pot of water to a rolling boil and salt it generously. Cook the ${pasta} until al dente.`,
+                        `Sauté the ${addIns} in olive oil until translucent, then deglaze the pan with a splash of water or wine.`,
+                        `Emulsify the sauce by tossing the ${pasta} with the ${addIns} and adding hot pasta water until consistently glossy.`
+                    ]
+                };
+            })(),
+            'Stir-fry': (() => {
+                const protein = findIng(['chicken', 'beef', 'pork', 'shrimp', 'tofu']) || 'protein';
+                const veggies = filterOut(protein).length > 0 ? filterOut(protein).join(' and ') : 'vegetables';
+                return {
+                    beginner: [
+                        `Chop all ingredients into bite-sized pieces for quick and even cooking.`,
+                        `Heat a pan with oil until very hot, then stir-fry the ${protein} and ${veggies}.`,
+                        `Add your favorite sauce and stir constantly for 3-5 minutes until everything is well coated.`
+                    ],
+                    intermediate: [
+                        `Ensure all ingredients are dry to achieve a good sear. Prepare a simple cornstarch slurry for the sauce.`,
+                        `Wok-sear the ${protein} in small batches to preserve texture, then remove from the pan.`,
+                        `Flash-fry the ${veggies}, return the ${protein}, and toss rapidly with the sauce at high heat for a perfect glaze.`
+                    ]
+                };
+            })(),
+            'Protein Main': (() => {
+                const protein = findIng(['chicken', 'beef', 'pork', 'shrimp', 'salmon']) || primary;
+                const sides = filterOut(protein).length > 0 ? filterOut(protein).join(' and ') : 'side dishes';
+                return {
+                    beginner: [
+                        `Season the ${protein} generously with salt and pepper on both sides.`,
+                        `Sear the ${protein} in a hot pan for 4-6 minutes per side until cooked through.`,
+                        `Sauté the ${sides} in the same pan to pick up all the delicious leftover flavors.`
+                    ],
+                    intermediate: [
+                        `Pat the ${protein} completely dry and season ahead of time. Use a heavy pan for even heat distribution.`,
+                        `Sear the ${protein} at high heat, then lower the temperature to baste with butter and herbs for a professional finish.`,
+                        `Let the ${protein} rest for at least 5 minutes while you prepare a rich pan sauce with the ${sides}.`
+                    ]
+                };
+            })(),
+            'Salad': (() => {
+                const greens = findIng(['lettuce', 'spinach', 'arugula', 'kale']) || 'greens';
+                const toppings = filterOut(greens).length > 0 ? filterOut(greens).join(' and ') : 'additional ingredients';
+                return {
+                    beginner: [
+                        `Wash and thoroughly dry the ${greens} to prevent a soggy salad.`,
+                        `Toss the ${greens} with the ${toppings} in a large serving bowl.`,
+                        `Drizzle with oil and citrus juice, then season with salt and pepper just before serving.`
+                    ],
+                    intermediate: [
+                        `Whisk together a balanced vinaigrette using acid, oil, mustard, and aromatics.`,
+                        `Layer the salad starting with the ${greens}, then aesthetically arrange the ${toppings} over the top.`,
+                        `Toss gently by hand, ensuring every leaf is kissed by the dressing without being bruised or weighed down.`
+                    ]
+                };
+            })(),
+            'Classic': {
+                beginner: [
+                    `Slowly soften the ${secondary} in a pan with some oil over medium heat.`,
+                    `Add the ${primary} and simmer gently until the flavors meld together perfectly.`,
+                    `Season to taste with salt and pepper, and serve warm.`
+                ],
+                intermediate: [
+                    `Build a deep flavor base by gently sweating the ${secondary} until intensely aromatic but not browned.`,
+                    `Add the ${primary} and simmer slowly, allowing the sauce to reduce and intensify in flavor.`,
+                    `Finish with a touch of fresh herbs or a pat of cold butter for extra richness and shine.`
+                ]
+            }
+        };
+
+        const dishTemplate = templates[dishType] || templates['Classic'];
+        return dishTemplate[level] || templates['Classic'][level];
+    };
+
     const generateMultiLevelRecipes = (ings) => {
-        const baseTitle = `${ings[0]} Dish`;
+        const dishType = detectDishType(ings);
+        const baseTitle = `${ings[0]} ${dishType === 'Specialty' ? 'Delight' : dishType}`;
         const detailedIngs = ings.map(i => generateDetailProportion(i));
 
         const metadata = {
@@ -191,24 +441,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 level: 'Beginner',
                 meta: metadata.beginner,
                 title: `Easy ${baseTitle}`,
-                desc: "A quick and simple way to make this dish without any fuss.",
+                desc: `A quick and simple ${dishType.toLowerCase()} dish made with fresh ingredients.`,
                 ingredients: detailedIngs,
                 phases: [
                     {
                         name: "Getting Ready",
                         steps: [
-                            `Put all your ingredients on the counter. ${ings.length > 3 ? "Keep the smaller items together so they are easy to find." : ""}`,
-                            `Chop up any big vegetables so they cook evenly.`
+                            `Prep all your ingredients: ${ings.join(', ')}.`,
+                            `Ensure your workspace is clean and you have a large pan or pot ready.`
                         ]
                     },
                     {
                         name: "The Cooking Part",
-                        steps: [
-                            `Heat a large pan over medium-high heat. Add some oil and swirl it around.`,
-                            `Put the ${ings.slice(0, 2).join(' and ')} in the pan. Cook until they smell good and start to get soft, about 5 minutes.`,
-                            `Add the rest of the ingredients: ${ings.slice(2).join(', ')}. Stir every now and then until everything is hot and tasty.`,
-                            `Add some salt and pepper to make the flavors pop.`
-                        ]
+                        steps: getStepsByDishType(ings, dishType, 'beginner')
                     }
                 ]
             },
@@ -216,31 +461,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 level: 'Intermediate',
                 title: `Gourmet ${baseTitle}`,
                 meta: metadata.intermediate,
-                desc: "A bit more detailed with extra flavors and better textures.",
+                desc: `An elevated ${dishType.toLowerCase()} experience with refined techniques and deeper flavors.`,
                 ingredients: [...detailedIngs, "1/2 cup White Wine (optional)", "2 tbsp Fresh Parsley, chopped"],
                 phases: [
                     {
-                        name: "Preparation",
+                        name: "Advanced Prep",
                         steps: [
-                            `Cut all your vegetables into same-sized pieces so they cook at the same time.`,
-                            `Measure out your liquids and spices before you start the stove.`
+                            `Focus on consistent knife work for even cooking of the ${ings.slice(0, 3).join(', ')}.`,
+                            `Mise en place: have everything measured and ready to go.`
                         ]
                     },
                     {
-                        name: "Building Flavor",
-                        steps: [
-                            `In a deep pan, brown the main ingredients until they have a nice dark crust. Take them out and set them aside.`,
-                            `Turn down the heat and add the ${ings[0]}. Cook slowly until they are brown and sweet.`,
-                            `Add the wine (or a splash of water) and scrape up the tasty brown bits from the bottom of the pan.`
-                        ]
-                    },
-                    {
-                        name: "The Final Simmer",
-                        steps: [
-                            `Put the main ingredients back in the pan and add the ${ings.slice(1).join(', ')}.`,
-                            `Bring to a light boil, then turn the heat down low. Let it simmer for 30 minutes until the sauce thickens up.`,
-                            `Add a small piece of butter at the end for a shiny finish and top with the fresh parsley.`
-                        ]
+                        name: "Technical Execution",
+                        steps: getStepsByDishType(ings, dishType, 'intermediate')
                     }
                 ]
             }
@@ -300,15 +533,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         </ul>
                     </div>
                     <div class="instructions">
-                        <h3 class="recipe-sub">Preparation</h3>
-                        ${recipe.phases.map(phase => `
-                            <div class="recipe-phase">
-                                <h4 class="phase-header">${phase.name}</h4>
-                                <ol class="inst-list">
-                                    ${phase.steps.map(step => `<li>${step}</li>`).join('')}
-                                </ol>
-                            </div>
-                        `).join('')}
+                        <h3 class="recipe-sub">Directions</h3>
+                        <ol class="recipe-steps">
+                            ${(() => {
+                const allSteps = recipe.phases.flatMap(p => p.steps);
+                return allSteps.map((step, idx) => `
+                                    <li>
+                                        <span class="step-label">Step ${idx + 1}</span>
+                                        <p class="step-text">${step}</p>
+                                    </li>
+                                `).join('');
+            })()}
+                        </ol>
                     </div>
                 </div>
             </div>
